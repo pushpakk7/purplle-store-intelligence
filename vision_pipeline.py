@@ -36,8 +36,12 @@ def main():
     cap = cv2.VideoCapture(video_path)
 
     if not cap.isOpened():
-        print(f"Error: Video file not found at {video_path}")
-        return
+        print(f"⚠️ Local video not found. Falling back to Live Webcam for demo...")
+        cap = cv2.VideoCapture(0)  # 0 is the default laptop webcam
+        
+        if not cap.isOpened():
+            print("Error: No webcam detected.")
+            return
 
     # Spatial-Temporal tracking dictionary to calculate dwelling thresholds
     # Format: { tracking_id: {"start_frame": frame_idx, "start_x": x, "start_y": y} }
