@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purplle Store Intelligence Engine</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans min-h-screen p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto">
+        
+        <header class="flex flex-col md:flex-row justify-between items-center mb-10 pb-6 border-b border-gray-800">
+            <div>
+                <h1 class="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
+                    <span class="text-purple-500">🛍️</span> Purplle Store Intelligence System
+                </h1>
+                <p class="text-gray-400 mt-1 text-sm">Full System Operations Terminal</p>
+            </div>
+            <button onclick="fetchData()" class="mt-4 md:mt-0 bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition-all shadow-lg hover:shadow-purple-500/20 flex items-center gap-2">
+                Sync Data Engine
+            </button>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+            <div class="bg-gray-800/50 border border-gray-700 rounded-xl p-6 shadow-xl">
+                <h3 class="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">Total Footfall</h3>
+                <span id="footfall-val" class="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">--</span>
+            </div>
+            <div class="bg-gray-800/50 border border-gray-700 rounded-xl p-6 shadow-xl">
+                <h3 class="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">Anomalies Detected</h3>
+                <span id="anomaly-count-val" class="text-5xl font-black text-red-400">0</span>
+            </div>
+            <div class="bg-gray-800/50 border border-gray-700 rounded-xl p-6 shadow-xl">
+                <h3 class="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">Active Cameras</h3>
+                <span class="text-5xl font-black text-white"><span id="camera-val">0</span><span class="text-gray-500 text-xl"> / 5</span></span>
+            </div>
+            <div class="bg-gray-800/50 border border-gray-700 rounded-xl p-6 shadow-xl">
+                <h3 class="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">System Health</h3>
+                <span class="text-5xl font-black text-green-400 text-2xl flex items-center gap-2 mt-2">Stable</span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
+            
+            <div class="lg:col-span-2 bg-gray-800/50 border border-gray-700 rounded-xl p-6 shadow-xl">
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">🗺️ Store Density Zone Heatmap</h2>
+                <div class="relative bg-gray-950 rounded-lg overflow-hidden flex justify-center items-center border border-gray-800" style="height: 340px;">
+                    <canvas id="heatmapCanvas" width="1920" height="1080" class="absolute w-full h-full opacity-75"></canvas>
+                    <div class="absolute inset-0 grid grid-cols-3 grid-rows-1 pointer-events-none text-center text-xs font-bold text-gray-600">
+                        <div class="border-r border-gray-800/40 pt-2 bg-purple-500/5">ZONE A: Entrance Counters</div>
+                        <div class="border-r border-gray-800/40 pt-2 bg-pink-500/5">ZONE B: Premium Display</div>
+                        <div class="pt-2 bg-blue-500/5">ZONE C: POS Cashier</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-800/50 border border-gray-700 rounded-xl p-6 shadow-xl flex flex-col">
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">⚠️ Security Anomaly Alerts</h2>
+                <div id="alerts-ticker" class="flex-1 space-y-3 overflow-y-auto pr-1" style="max-height: 340px;">
+                    <p class="text-sm text-gray-500 text-center py-12">Monitoring active operational streams...</p>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="bg-gray-800/50 border border-gray-700 rounded-xl shadow-xl overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-700 bg-gray-800/80">
+                <h2 class="text-lg font-semibold text-white">System Logs Feed Ingestion</h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-gray-900/50 text-gray-400 uppercase text-xs">
+                        <tr>
+                            <th class="px-6 py-4 font-semibold tracking-wider">Time Detected</th>
+                            <th class="px-6 py-4 font-semibold tracking-wider">Camera ID</th>
+                            <th class="px-6 py-4 font-semibold tracking-wider">Object Model Mapping</th>
+                            <th class="px-6 py-4 font-semibold tracking-wider">Relative Vectors</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body" class="divide-y divide-gray-700">
+                        <tr><td colspan="4" class="px-6 py-8 text-center text-gray-500">Awaiting payload initialization synchronization...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const API_URL = "http://127.0.0.1:8000";
+
+        async function fetchData() {
+            try {
+                // 1. Synchronize Operational Metrics Base values
+                const footfallRes = await fetch(`${API_URL}/analytics/footfall`);
+                const footfallData = await footfallRes.json();
+                document.getElementById('footfall-val').innerText = footfallData.total_visitors;
+
+                // 2. Fetch Active Cameras
+                const cameraRes = await fetch(`${API_URL}/analytics/cameras`);
+                const cameraData = await cameraRes.json();
+                document.getElementById('camera-val').innerText = cameraData.active_count;
+
+                // 3. Query Alerts and Operational Anomalies Ledger
+                const anomalyRes = await fetch(`${API_URL}/analytics/anomalies`);
+                const anomalyData = await anomalyRes.json();
+                document.getElementById('anomaly-count-val').innerText = anomalyData.total_anomalies_count;
+
+                const ticker = document.getElementById('alerts-ticker');
+                ticker.innerHTML = '';
+                if (anomalyData.recent_alerts.length === 0) {
+                    ticker.innerHTML = '<p class="text-sm text-gray-500 text-center py-12">No critical behavioral anomalies flagged.</p>';
+                } else {
+                    anomalyData.recent_alerts.forEach(alert => {
+                        ticker.innerHTML += `
+                            <div class="bg-red-950/40 border border-red-900/50 rounded-lg p-3 flex flex-col gap-1 transition-all">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs text-red-400 font-bold tracking-wide uppercase">🚨 CRITICAL FLAG</span>
+                                    <span class="text-[10px] text-gray-500 font-mono">${new Date(alert.timestamp).toLocaleTimeString()}</span>
+                                </div>
+                                <p class="text-sm text-gray-200 font-medium">${alert.type}</p>
+                                <p class="text-xs text-gray-400">Target Assigned Entity: <span class="text-red-300 font-mono font-bold">PERSON_ID #${alert.tracking_id}</span></p>
+                            </div>
+                        `;
+                    });
+                }
+
+                // 4. Render Canvas Vector Spatial Cluster Map Points (Heatmap Generation)
+                const heatmapRes = await fetch(`${API_URL}/analytics/heatmap`);
+                const heatmapData = await heatmapRes.json();
+                renderHeatmap(heatmapData.coordinates);
+
+                // 5. Update Logs Ledger feed table listing
+                const eventsRes = await fetch(`${API_URL}/events/recent?limit=10`);
+                const eventsData = await eventsRes.json();
+                const tableBody = document.getElementById('table-body');
+                tableBody.innerHTML = '';
+
+                eventsData.recent_events.forEach(event => {
+                    const timeString = new Date(event.timestamp).toLocaleTimeString();
+                    tableBody.innerHTML += `
+                        <tr class="hover:bg-gray-700/20 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap text-gray-300 font-mono text-xs">${timeString}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-gray-400 font-bold">${event.camera_id}</td>
+                            <td class="px-6 py-4 whitespace-nowrap font-semibold text-white">ID #${event.tracking_id}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-purple-400 font-mono text-xs">[X: ${event.centroid[0]}, Y: ${event.centroid[1]}]</td>
+                        </tr>
+                    `;
+                });
+
+            } catch (error) {
+                console.error("Operational synchronization fault:", error);
+            }
+        }
+
+       function renderHeatmap(coordinates) {
+            const canvas = document.getElementById('heatmapCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Changed to "screen" to prevent the harsh white blowout
+            ctx.globalCompositeOperation = "screen";
+
+            coordinates.forEach(coord => {
+                const [x, y] = coord;
+                
+                // Slightly smaller radius for better definition
+                const radius = 80; 
+                const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+                
+                // Drastically reduced opacity (0.15 and 0.05) for smooth blending
+                gradient.addColorStop(0, 'rgba(236, 72, 153, 0.15)');  // Soft pink core
+                gradient.addColorStop(0.5, 'rgba(168, 85, 247, 0.05)'); // Fading purple mid-zone
+                gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');           // Invisible edge
+                
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, 2 * Math.PI);
+                ctx.fill();
+            });
+            
+            ctx.globalCompositeOperation = "source-over";
+        }
+        window.onload = () => {
+            fetchData();
+            // Automatically poll backend tracking engine metrics registry database context records every 3 seconds
+            setInterval(fetchData, 3000);
+        };
+    </script>
+</body>
+</html>
